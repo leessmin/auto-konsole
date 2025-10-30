@@ -1,11 +1,10 @@
-use std::{env::home_dir, fs, path::PathBuf};
+use std::{env::home_dir, fs};
 
-// Konsole colorscheme目录
-static COLORSHEME_DIR: &str = ".local/share/konsole";
+use crate::colorscheme::path::COLORSCHEME_DIR;
 
 // 读取colorscheme列表
 pub fn read_colorscheme() -> Vec<String> {
-    let colorscheme_path = home_dir().unwrap().join(COLORSHEME_DIR);
+    let colorscheme_path = home_dir().unwrap().join(COLORSCHEME_DIR);
 
     fs::read_dir(colorscheme_path)
         .unwrap()
