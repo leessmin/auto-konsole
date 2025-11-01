@@ -1,9 +1,9 @@
+use crate::{colorscheme, theme::ThemeType};
 use futures::StreamExt;
 use zbus::{
     Connection, Result, proxy,
     zvariant::{OwnedValue, Value},
 };
-use crate::theme::ThemeType;
 
 #[proxy(
     interface = "org.freedesktop.portal.Settings",
@@ -34,13 +34,12 @@ pub async fn listen_theme_changes() -> Result<()> {
                 continue;
             }
 
-            println!("Theme changed: key:{}, value: {}", args.key(), args.value());
-
             // 主题类型 1 dart 2 light
             let val: u32 = args.value().clone().try_into().unwrap_or_default();
             let typ = ThemeType::try_from(val).unwrap_or_default();
 
-            // TODO: 未完成 变更主题
+            // 变更主题
+            let _ = colorscheme::write::set_konsolerc(typ);
         }
     }
 

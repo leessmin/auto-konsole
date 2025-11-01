@@ -36,8 +36,8 @@ fn write_replace_file(content: &str, path: &Path, key: &str, value: &str) -> io:
     Ok(())
 }
 
-// 写入konsolerc文件
-fn set_konsolerc(typ: ThemeType) -> io::Result<()> {
+// 写入konsolerc文件 更换profile文件
+pub fn set_konsolerc(typ: ThemeType) -> io::Result<()> {
     let konsolerc_path = home_dir().unwrap().join(KONSOLERC_PATH);
 
     let content = fs::read_to_string(&konsolerc_path)?;
@@ -57,7 +57,7 @@ fn set_konsolerc(typ: ThemeType) -> io::Result<()> {
 
 // 创建自定义profile
 // 存在则创建，不存在则修改
-fn create_profile(typ: ThemeType, colorscheme: &str) -> io::Result<()> {
+pub fn create_profile(typ: ThemeType, colorscheme: &str) -> io::Result<()> {
     let custom_profile_path = match typ {
         ThemeType::Dark => home_dir()
             .unwrap()
@@ -122,11 +122,14 @@ mod test {
 
     use home::home_dir;
 
-    use crate::{colorscheme::{
-        self,
-        path::KONSOLERC_PATH,
-        write::{create_profile, set_konsolerc},
-    }, theme::ThemeType};
+    use crate::{
+        colorscheme::{
+            self,
+            path::KONSOLERC_PATH,
+            write::{create_profile, set_konsolerc},
+        },
+        theme::ThemeType,
+    };
 
     #[test]
     fn test_set_konsolerc_dark() {
