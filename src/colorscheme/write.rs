@@ -6,13 +6,10 @@ use std::{
 
 use home::home_dir;
 
-use crate::colorscheme::{self, path::KONSOLERC_PATH};
-
-// 主题类型
-enum ProfileType {
-    Dark,
-    Light,
-}
+use crate::{
+    colorscheme::{self, path::KONSOLERC_PATH},
+    theme::ThemeType,
+};
 
 // 替换value, 并写入文件
 fn write_replace_file(content: &str, path: &Path, key: &str, value: &str) -> io::Result<()> {
@@ -40,7 +37,7 @@ fn write_replace_file(content: &str, path: &Path, key: &str, value: &str) -> io:
 }
 
 // 写入konsolerc文件
-fn set_konsolerc(typ: ProfileType) -> io::Result<()> {
+fn set_konsolerc(typ: ThemeType) -> io::Result<()> {
     let konsolerc_path = home_dir().unwrap().join(KONSOLERC_PATH);
 
     let content = fs::read_to_string(&konsolerc_path)?;
@@ -50,8 +47,8 @@ fn set_konsolerc(typ: ProfileType) -> io::Result<()> {
         &konsolerc_path,
         "DefaultProfile=",
         match typ {
-            ProfileType::Dark => "Dark.profile",
-            ProfileType::Light => "Light.profile",
+            ThemeType::Dark => "Dark.profile",
+            ThemeType::Light => "Light.profile",
         },
     )?;
 
@@ -60,12 +57,12 @@ fn set_konsolerc(typ: ProfileType) -> io::Result<()> {
 
 // 创建自定义profile
 // 存在则创建，不存在则修改
-fn create_profile(typ: ProfileType, colorscheme: &str) -> io::Result<()> {
+fn create_profile(typ: ThemeType, colorscheme: &str) -> io::Result<()> {
     let custom_profile_path = match typ {
-        ProfileType::Dark => home_dir()
+        ThemeType::Dark => home_dir()
             .unwrap()
             .join(colorscheme::path::DARK_PROFILE_PATH),
-        ProfileType::Light => home_dir()
+        ThemeType::Light => home_dir()
             .unwrap()
             .join(colorscheme::path::LIGHT_PROFILE_PATH),
     };
@@ -86,8 +83,8 @@ Name={}
 Parent=FALLBACK/
 "#,
             match typ {
-                ProfileType::Dark => "Dark",
-                ProfileType::Light => "Light",
+                ThemeType::Dark => "Dark",
+                ThemeType::Light => "Light",
             }
         )
     };
@@ -104,8 +101,8 @@ Parent=FALLBACK/
                 format!(
                     "Name={}",
                     match typ {
-                        ProfileType::Dark => "Dark",
-                        ProfileType::Light => "Light",
+                        ThemeType::Dark => "Dark",
+                        ThemeType::Light => "Light",
                     }
                 )
             } else {
@@ -125,15 +122,15 @@ mod test {
 
     use home::home_dir;
 
-    use crate::colorscheme::{
+    use crate::{colorscheme::{
         self,
         path::KONSOLERC_PATH,
-        write::{ProfileType, create_profile, set_konsolerc},
-    };
+        write::{create_profile, set_konsolerc},
+    }, theme::ThemeType};
 
     #[test]
     fn test_set_konsolerc_dark() {
-        set_konsolerc(ProfileType::Dark).unwrap();
+        set_konsolerc(ThemeType::Dark).unwrap();
         let konsolerc_path = home_dir().unwrap().join(KONSOLERC_PATH);
 
         let content = fs::read_to_string(&konsolerc_path).unwrap();
@@ -148,7 +145,7 @@ mod test {
 
     #[test]
     fn test_set_konsolerc_light() {
-        set_konsolerc(ProfileType::Light).unwrap();
+        set_konsolerc(ThemeType::Light).unwrap();
         let konsolerc_path = home_dir().unwrap().join(KONSOLERC_PATH);
 
         let content = fs::read_to_string(&konsolerc_path).unwrap();
@@ -164,7 +161,7 @@ mod test {
     #[test]
     fn test_create_profile_dark() {
         let colorscheme = "BreezeDark";
-        create_profile(ProfileType::Dark, colorscheme).unwrap();
+        create_profile(ThemeType::Dark, colorscheme).unwrap();
 
         let profile_path = home_dir()
             .unwrap()
@@ -183,7 +180,7 @@ mod test {
     #[test]
     fn test_create_profile_light() {
         let colorscheme = "BreezeLight";
-        create_profile(ProfileType::Light, colorscheme).unwrap();
+        create_profile(ThemeType::Light, colorscheme).unwrap();
 
         let profile_path = home_dir()
             .unwrap()
