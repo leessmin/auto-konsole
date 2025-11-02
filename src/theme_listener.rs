@@ -17,14 +17,33 @@ trait ThemeListener {
     fn setting_changed(&self, namespace: &str, key: &str, value: Value<'_>);
 }
 
+// OwnedValue解包转u32
+fn extract_u32(value: OwnedValue) -> Option<u32> {
+    // 尝试直接 downcast
+    if let Ok(v) = value.downcast_ref::<u32>() {
+        return Some(v);
+    }
+
+    None
+}
+
 pub async fn listen_theme_changes() -> Result<()> {
     let connection = Connection::session().await?;
 
     let settings = ThemeListenerProxy::new(&connection).await?;
 
-    // let value = settings
-    //     .read("org.freedesktop.appearance", "color-scheme")
-    //     .await?;
+    // 初始化主题
+    {
+        let value = settings
+            .read("org.freedesktop.appearance", "color-scheme")
+            .await?;
+
+        let val = extract_u32(value).unwrap_or_default();
+        let typ = ThemeType::try_from(val).unwrap_or_default();
+
+        // 变更主题
+        let _ = colorscheme::write::set_konsolerc(typ);
+    }
 
     let mut stream = settings.receive_setting_changed().await?;
 

@@ -1,9 +1,14 @@
+use clap::Parser;
+
+pub mod args;
 pub mod colorscheme;
-pub mod theme_listener;
 pub mod config;
 pub mod theme;
+pub mod theme_listener;
 
 #[tokio::main]
 async fn main() {
-    theme_listener::listen_theme_changes().await.unwrap();
+    let args = args::Args::parse();
+
+    args.command().await;
 }
