@@ -2,7 +2,6 @@ use clap::Parser;
 
 pub mod args;
 pub mod colorscheme;
-pub mod config;
 pub mod theme;
 pub mod theme_listener;
 

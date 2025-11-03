@@ -1,6 +1,6 @@
 use clap::Parser;
 
-use crate::{colorscheme, config, theme, theme_listener};
+use crate::{colorscheme, theme, theme_listener};
 
 #[derive(Parser, Debug)]
 #[command(
@@ -47,14 +47,12 @@ impl Args {
         // 设置dark主题颜色方案
         if let Some(scheme) = &self.dark {
             colorscheme::write::create_profile(theme::ThemeType::Dark, scheme).unwrap();
-            config::set_config(theme::ThemeType::Dark, scheme);
             return;
         }
 
         // 设置light主题颜色方案
         if let Some(scheme) = &self.light {
             colorscheme::write::create_profile(theme::ThemeType::Light, scheme).unwrap();
-            config::set_config(theme::ThemeType::Light, scheme);
             return;
         }
     }
