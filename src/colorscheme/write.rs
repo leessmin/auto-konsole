@@ -5,11 +5,43 @@ use std::{
 };
 
 use home::home_dir;
+use zbus::{Connection, Proxy, Result};
 
 use crate::{
     colorscheme::{self, path::KONSOLERC_PATH},
     theme::ThemeType,
 };
+
+// 使用dbus设置konsole会话主题
+async fn set_konsole_colorscheme_dbus(typ: &ThemeType) -> Result<()> {
+    let connection = Connection::session().await?;
+
+    let profile = match typ {
+        ThemeType::Dark => "Dark",
+        ThemeType::Light => "Light",
+    };
+
+    let mut sys = sysinfo::System::new_all();
+    sys.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
+
+    for (pid, process) in sys.processes() {
+        let process_name = process.name().to_str().unwrap_or_default();
+        if process_name.to_lowercase() != "konsole" {
+            continue;
+        }
+        let proxy = Proxy::new(
+            &connection,
+            format!("org.kde.konsole-{}", pid),
+            "/Sessions/1",
+            "org.kde.konsole.Session",
+        )
+        .await?;
+
+        proxy.call_method("setProfile", &profile).await?;
+    }
+
+    Ok(())
+}
 
 // 替换value, 并写入文件
 fn write_replace_file(content: &str, path: &Path, key: &str, value: &str) -> io::Result<()> {
@@ -37,7 +69,9 @@ fn write_replace_file(content: &str, path: &Path, key: &str, value: &str) -> io:
 }
 
 // 写入konsolerc文件 更换profile文件
-pub fn set_konsolerc(typ: ThemeType) -> io::Result<()> {
+pub async fn set_konsolerc(typ: ThemeType) -> io::Result<()> {
+    let _ = set_konsole_colorscheme_dbus(&typ).await;
+
     let konsolerc_path = home_dir().unwrap().join(KONSOLERC_PATH);
 
     let content = fs::read_to_string(&konsolerc_path)?;
@@ -121,19 +155,20 @@ mod test {
     use std::fs;
 
     use home::home_dir;
+    use zbus::conn;
 
     use crate::{
         colorscheme::{
             self,
             path::KONSOLERC_PATH,
-            write::{create_profile, set_konsolerc},
+            write::{create_profile, set_konsole_colorscheme_dbus, set_konsolerc},
         },
         theme::ThemeType,
     };
 
-    #[test]
-    fn test_set_konsolerc_dark() {
-        set_konsolerc(ThemeType::Dark).unwrap();
+    #[tokio::test]
+    async fn test_set_konsolerc_dark() {
+        set_konsolerc(ThemeType::Dark).await.unwrap();
         let konsolerc_path = home_dir().unwrap().join(KONSOLERC_PATH);
 
         let content = fs::read_to_string(&konsolerc_path).unwrap();
@@ -146,9 +181,9 @@ mod test {
         assert_eq!(default_line, "DefaultProfile=Dark.profile");
     }
 
-    #[test]
-    fn test_set_konsolerc_light() {
-        set_konsolerc(ThemeType::Light).unwrap();
+    #[tokio::test]
+    async fn test_set_konsolerc_light() {
+        set_konsolerc(ThemeType::Light).await.unwrap();
         let konsolerc_path = home_dir().unwrap().join(KONSOLERC_PATH);
 
         let content = fs::read_to_string(&konsolerc_path).unwrap();
@@ -197,5 +232,19 @@ mod test {
             .unwrap_or("");
 
         assert_eq!(default_line, format!("ColorScheme={}", colorscheme));
+    }
+
+    #[tokio::test]
+    async fn test_set_konsolerc_dbus_light() {
+        let _ = set_konsole_colorscheme_dbus(&ThemeType::Light)
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_set_konsolerc_dbus_dark() {
+        let _ = set_konsole_colorscheme_dbus(&ThemeType::Dark)
+            .await
+            .unwrap();
     }
 }

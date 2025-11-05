@@ -42,7 +42,7 @@ pub async fn listen_theme_changes() -> Result<()> {
         let typ = ThemeType::try_from(val).unwrap_or_default();
 
         // 变更主题
-        let _ = colorscheme::write::set_konsolerc(typ);
+        let _ = colorscheme::write::set_konsolerc(typ).await;
     }
 
     let mut stream = settings.receive_setting_changed().await?;
@@ -58,7 +58,7 @@ pub async fn listen_theme_changes() -> Result<()> {
             let typ = ThemeType::try_from(val).unwrap_or_default();
 
             // 变更主题
-            let _ = colorscheme::write::set_konsolerc(typ);
+            let _ = colorscheme::write::set_konsolerc(typ).await;
         }
     }
 
